@@ -40,42 +40,6 @@ spec:
       targetPort: 80
 
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx-deployment
-  namespace: krzak-pol-web
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: nginx
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:alpine
-          ports:
-            - containerPort: 80
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx-service
-  namespace: krzak-pol-web
-spec:
-  type: ClusterIP
-  selector:
-    app: nginx
-  ports:
-    - port: 80
-      targetPort: 80
-
----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -102,6 +66,7 @@ ZDN 2
 # instalacja longhorn przez wbudowne w rancher dashboard charts
 cluster > apps > charts: longhorn
 install w napespace default potem next i install
+ustawienie default replicas na 1 poniewaz mamy 1 node
 
 dodanie do projektow/namespace projekt o nazwie krzak-pol-magazyn i utworzenia w nim namespace krzak-pol-magazyn
 w storage > PVC (PersistentVolumeClaims) dodajemy nowy z ustawieniami
@@ -330,6 +295,29 @@ ZDN 9
 w dashboard neuvector wejsc w policy > admission controll, zmienic global na zero trust (enabled) i protect
 dodac nowa regule klikajac new
   i wybrac [image] [is one of] [latest], z mode protect enabled i save
+
+# dodac network policy
+import yaml:
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: izolacja-bazy-premium
+  namespace: klienci-premium
+spec:
+  podSelector:
+    matchLabels:
+      app: mariadb
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: krzak-pol-web
+    ports:
+    - protocol: TCP
+      port: 3306
 
 ZDN 10
 
